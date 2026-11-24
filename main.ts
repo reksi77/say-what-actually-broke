@@ -7,7 +7,7 @@
 // The line is a fixed string written by hand. It is deterministic:
 // every run writes the same bytes, no randomness, no network, no input.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 // The entry line. 187 characters, one line, no trailing newline.
@@ -19,4 +19,14 @@ const ENTRY =
 
 const outDir = process.env.OUTPUT_DIR ?? "/output";
 mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, "entry.txt"), ENTRY, "utf8");
+const outPath = join(outDir, "entry.txt");
+writeFileSync(outPath, ENTRY, "utf8");
+
+// Read-back guard: the gate counts exact bytes, so verify what landed
+// on disk is byte-for-byte the line above before reporting success.
+const written = readFileSync(outPath, "utf8");
+if (written !== ENTRY) {
+  throw new Error(
+    `entry.txt mismatch: wrote ${ENTRY.length} chars, read back ${written.length}`,
+  );
+}
